@@ -28,6 +28,9 @@
   },
   "homepage": "https://github.com/mcler/vue-web-component-wrapper#readme",
   "devDependencies": {
+    "@babel/core": "^7.0.0-beta.51",
+    "@babel/plugin-transform-arrow-functions": "^7.0.0-beta.51",
+    "@babel/plugin-transform-block-scoping": "^7.0.0-beta.51",
     "eslint": "^4.16.0",
     "eslint-plugin-vue-libs": "^2.1.0",
     "http-server": "^0.11.1",
@@ -35,6 +38,7 @@
     "lint-staged": "^6.1.0",
     "puppeteer": "^1.0.0",
     "rollup": "^0.55.3",
+    "rollup-plugin-babel": "^4.0.0-beta.5",
     "vue": "^2.5.13",
     "yorkie": "^1.0.3"
   },

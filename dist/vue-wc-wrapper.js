@@ -1,35 +1,32 @@
-const camelizeRE = /-(\w)/g
-const camelize = str => {
-  return str.replace(camelizeRE, (_, c) => c ? c.toUpperCase() : '')
+var camelizeRE = /-(\w)/g
+var camelize = function (str) {
+  return str.replace(camelizeRE, function (_, c) {
+    return c ? c.toUpperCase() : ''
+  })
 }
-
-const hyphenateRE = /\B([A-Z])/g
-const hyphenate = str => {
+var hyphenateRE = /\B([A-Z])/g
+var hyphenate = function (str) {
   return str.replace(hyphenateRE, '-$1').toLowerCase()
 }
-
 function getInitialProps (propsList) {
-  const res = {}
-  propsList.forEach(key => {
+  var res = {}
+  propsList.forEach(function (key) {
     res[key] = undefined
   })
   return res
 }
-
 function injectHook (options, key, hook) {
   options[key] = [].concat(options[key] || [])
   options[key].unshift(hook)
 }
-
 function callHooks (vm, hook) {
   if (vm) {
-    const hooks = vm.$options[hook] || []
-    hooks.forEach(hook => {
+    var hooks = vm.$options[hook] || []
+    hooks.forEach(function (hook) {
       hook.call(vm)
     })
   }
 }
-
 function createCustomEvent (name, args) {
   return new CustomEvent(name, {
     bubbles: false,
@@ -38,31 +35,41 @@ function createCustomEvent (name, args) {
   })
 }
 
-const isBoolean = val => /function Boolean/.test(String(val))
-const isNumber = val => /function Number/.test(String(val))
+var isBoolean = function (val) {
+  return /function Boolean/.test(String(val))
+}
 
-function convertAttributeValue (value, name, { type } = {}) {
+var isNumber = function (val) {
+  return /function Number/.test(String(val))
+}
+
+function convertAttributeValue (value, name, {
+  type
+} = {}) {
   if (isBoolean(type)) {
     if (value === 'true' || value === 'false') {
       return value === 'true'
     }
+
     if (value === '' || value === name) {
       return true
     }
+
     return value != null
   } else if (isNumber(type)) {
-    const parsed = parseFloat(value, 10)
+    var parsed = parseFloat(value, 10)
     return isNaN(parsed) ? value : parsed
   } else {
     return value
   }
 }
-
 function toVNodes (h, children) {
-  const res = []
-  for (let i = 0, l = children.length; i < l; i++) {
+  var res = []
+
+  for (var i = 0, l = children.length; i < l; i++) {
     res.push(toVNode(h, children[i]))
   }
+
   return res
 }
 
@@ -70,16 +77,18 @@ function toVNode (h, node) {
   if (node.nodeType === 3) {
     return node.data.trim() ? node.data : null
   } else if (node.nodeType === 1) {
-    const data = {
+    var data = {
       attrs: getAttributes(node),
       domProps: {
         innerHTML: node.innerHTML
       }
     }
+
     if (data.attrs.slot) {
       data.slot = data.attrs.slot
       delete data.attrs.slot
     }
+
     return h(node.tagName, data)
   } else {
     return null
@@ -87,125 +96,128 @@ function toVNode (h, node) {
 }
 
 function getAttributes (node) {
-  const res = {}
-  for (let i = 0, l = node.attributes.length; i < l; i++) {
-    const attr = node.attributes[i]
+  var res = {}
+
+  for (var i = 0, l = node.attributes.length; i < l; i++) {
+    var attr = node.attributes[i]
     res[attr.nodeName] = attr.nodeValue
   }
+
   return res
 }
 
 function wrap (Vue, Component) {
-  const isAsync = typeof Component === 'function' && !Component.cid
-  let isInitialized = false
-  let hyphenatedPropsList
-  let camelizedPropsList
-  let camelizedPropsMap
+  var isAsync = typeof Component === 'function' && !Component.cid
+  var isInitialized = false
+  var hyphenatedPropsList
+  var camelizedPropsList
+  var camelizedPropsMap
 
   function initialize (Component) {
     if (isInitialized) return
+    var options = typeof Component === 'function' ? Component.options : Component // extract props info
 
-    const options = typeof Component === 'function'
-      ? Component.options
-      : Component
-
-    // extract props info
-    const propsList = Array.isArray(options.props)
-      ? options.props
-      : Object.keys(options.props || {})
+    var propsList = Array.isArray(options.props) ? options.props : Object.keys(options.props || {})
     hyphenatedPropsList = propsList.map(hyphenate)
     camelizedPropsList = propsList.map(camelize)
-    const originalPropsAsObject = Array.isArray(options.props) ? {} : options.props || {}
-    camelizedPropsMap = camelizedPropsList.reduce((map, key, i) => {
+    var originalPropsAsObject = Array.isArray(options.props) ? {} : options.props || {}
+    camelizedPropsMap = camelizedPropsList.reduce(function (map, key, i) {
       map[key] = originalPropsAsObject[propsList[i]]
       return map
-    }, {})
+    }, {}) // proxy $emit to native DOM events
 
-    // proxy $emit to native DOM events
     injectHook(options, 'beforeCreate', function () {
-      const emit = this.$emit
-      this.$emit = () => {
-        const name = arguments.shift()
-        const args = arguments
+      var _this = this,
+        _arguments = arguments
 
-        this.$root.$options.customElement.dispatchEvent(createCustomEvent(name, args))
-        return emit.apply(this, [name].concat(args))
+      var emit = this.$emit
+
+      this.$emit = function () {
+        var name = _arguments.shift()
+
+        var args = _arguments
+
+        _this.$root.$options.customElement.dispatchEvent(createCustomEvent(name, args))
+
+        return emit.apply(_this, [name].concat(args))
       }
     })
-
     injectHook(options, 'created', function () {
-      // sync default props values to wrapper on created
-      camelizedPropsList.forEach(key => {
-        this.$root.props[key] = this[key]
-      })
-    })
+      var _this2 = this
 
-    // proxy props as Element properties
-    camelizedPropsList.forEach(key => {
+      // sync default props values to wrapper on created
+      camelizedPropsList.forEach(function (key) {
+        _this2.$root.props[key] = _this2[key]
+      })
+    }) // proxy props as Element properties
+
+    camelizedPropsList.forEach(function (key) {
       Object.defineProperty(CustomElement.prototype, key, {
         get () {
           return this._wrapper.props[key]
         },
+
         set (newVal) {
           this._wrapper.props[key] = newVal
         },
+
         enumerable: false,
         configurable: true
       })
     })
-
     isInitialized = true
   }
 
   function syncAttribute (el, key) {
-    const camelized = camelize(key)
-    const value = el.hasAttribute(key) ? el.getAttribute(key) : undefined
-    el._wrapper.props[camelized] = convertAttributeValue(
-      value,
-      key,
-      camelizedPropsMap[camelized]
-    )
+    var camelized = camelize(key)
+    var value = el.hasAttribute(key) ? el.getAttribute(key) : undefined
+    el._wrapper.props[camelized] = convertAttributeValue(value, key, camelizedPropsMap[camelized])
   }
 
   class CustomElement extends HTMLElement {
     constructor () {
-      super()
-      this.attachShadow({ mode: 'open' })
+      var _this3
 
-      const wrapper = this._wrapper = new Vue({
+      _this3 = super()
+      this.attachShadow({
+        mode: 'open'
+      })
+      var wrapper = this._wrapper = new Vue({
         name: 'shadow-root',
         customElement: this,
         shadowRoot: this.shadowRoot,
+
         data () {
           return {
             props: {},
             slotChildren: []
           }
         },
+
         render (h) {
           return h(Component, {
             ref: 'inner',
             props: this.props
           }, this.slotChildren)
         }
-      })
 
-      // Use MutationObserver to react to future attribute & slot content change
-      const observer = new MutationObserver(mutations => {
-        let hasChildrenChange = false
-        for (let i = 0; i < mutations.length; i++) {
-          const m = mutations[i]
-          if (isInitialized && m.type === 'attributes' && m.target === this) {
-            syncAttribute(this, m.attributeName)
+      }) // Use MutationObserver to react to future attribute & slot content change
+
+      var observer = new MutationObserver(function (mutations) {
+        var hasChildrenChange = false
+
+        for (var i = 0; i < mutations.length; i++) {
+          var m = mutations[i]
+
+          if (isInitialized && m.type === 'attributes' && m.target === _this3) {
+            syncAttribute(_this3, m.attributeName)
           } else {
             hasChildrenChange = true
           }
         }
+
         if (hasChildrenChange) {
-          wrapper.slotChildren = Object.freeze(toVNodes(
-            wrapper.$createElement,
-            this.childNodes
-          ))
+          wrapper.slotChildren = Object.freeze(toVNodes(wrapper.$createElement, _this3.childNodes))
         }
       })
       observer.observe(this, {
@@ -221,13 +233,16 @@ function wrap (Vue, Component) {
     }
 
     connectedCallback () {
-      const wrapper = this._wrapper
+      var _this4 = this
+
+      var wrapper = this._wrapper
+
       if (!wrapper._isMounted) {
         // initialize attributes
-        const syncInitialAttributes = () => {
+        var syncInitialAttributes = function () {
           wrapper.props = getInitialProps(camelizedPropsList)
-          hyphenatedPropsList.forEach(key => {
-            syncAttribute(this, key)
+          hyphenatedPropsList.forEach(function (key) {
+            syncAttribute(_this4, key)
           })
         }
 
@@ -235,19 +250,17 @@ function wrap (Vue, Component) {
           syncInitialAttributes()
         } else {
           // async & unresolved
-          Component().then(resolved => {
+          Component().then(function (resolved) {
             if (resolved.__esModule || resolved[Symbol.toStringTag] === 'Module') {
               resolved = resolved.default
             }
+
             initialize(resolved)
             syncInitialAttributes()
           })
-        }
-        // initialize children
-        wrapper.slotChildren = Object.freeze(toVNodes(
-          wrapper.$createElement,
-          this.childNodes
-        ))
+        } // initialize children
+
+        wrapper.slotChildren = Object.freeze(toVNodes(wrapper.$createElement, this.childNodes))
         wrapper.$mount()
         this.shadowRoot.appendChild(wrapper.$el)
       } else {
