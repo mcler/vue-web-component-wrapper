@@ -38,12 +38,33 @@ export default function wrap (Vue, Component) {
     // proxy $emit to native DOM events
     injectHook(options, 'beforeCreate', function () {
       const emit = this.$emit
-      this.$emit = () => {
-        let name = arguments.shift();
-        let args = arguments;
+      const vue = this
 
-        this.$root.$options.customElement.dispatchEvent(createCustomEvent(name, args));
-        return emit.apply(this, [name].concat(args));
+      this.$emit = function () {
+        const args = Array.from(arguments)
+        const eventName = args.shift()
+        let value = Array.from(args)
+        if (value.length <= 1) {
+          value = value[0]
+        }
+
+        let propName
+        if (options && options.model && eventName === options.model.event && options.model.prop) {
+          propName = options.model.prop
+        } else if (/^onChange/.test(eventName)) {
+          propName = eventName.replace(/^onChange/, '')
+          propName = propName.charAt(0).toLowerCase() + propName.slice(1)
+        } else if (eventName === 'input') {
+          propName = 'value'
+        }
+
+        if (propName) {
+          vue.$root.$options.customElement[propName] = value
+        }
+
+        vue.$root.$options.customElement.dispatchEvent(createCustomEvent(eventName, args))
+
+        return emit.apply(vue, [name].concat(args))
       }
     })
 
@@ -61,7 +82,9 @@ export default function wrap (Vue, Component) {
           return this._wrapper.props[key]
         },
         set (newVal) {
-          this._wrapper.props[key] = newVal
+          if (this[key] !== newVal) {
+            this._wrapper.props[key] = newVal
+          }
         },
         enumerable: false,
         configurable: true

@@ -127,27 +127,43 @@ function wrap (Vue, Component) {
     }, {}) // proxy $emit to native DOM events
 
     injectHook(options, 'beforeCreate', function () {
-      var _this = this,
-        _arguments = arguments
-
       var emit = this.$emit
+      var vue = this
 
       this.$emit = function () {
-        var name = _arguments.shift()
+        var args = Array.from(arguments)
+        var eventName = args.shift()
+        var value = Array.from(args)
 
-        var args = _arguments
+        if (value.length <= 1) {
+          value = value[0]
+        }
 
-        _this.$root.$options.customElement.dispatchEvent(createCustomEvent(name, args))
+        var propName
 
-        return emit.apply(_this, [name].concat(args))
+        if (options && options.model && eventName === options.model.event && options.model.prop) {
+          propName = options.model.prop
+        } else if (/^onChange/.test(eventName)) {
+          propName = eventName.replace(/^onChange/, '')
+          propName = propName.charAt(0).toLowerCase() + propName.slice(1)
+        } else if (eventName === 'input') {
+          propName = 'value'
+        }
+
+        if (propName) {
+          vue.$root.$options.customElement[propName] = value
+        }
+
+        vue.$root.$options.customElement.dispatchEvent(createCustomEvent(eventName, args))
+        return emit.apply(vue, [name].concat(args))
       }
     })
     injectHook(options, 'created', function () {
-      var _this2 = this
+      var _this = this
 
       // sync default props values to wrapper on created
       camelizedPropsList.forEach(function (key) {
-        _this2.$root.props[key] = _this2[key]
+        _this.$root.props[key] = _this[key]
       })
     }) // proxy props as Element properties
 
@@ -158,7 +174,9 @@ function wrap (Vue, Component) {
         },
 
         set (newVal) {
-          this._wrapper.props[key] = newVal
+          if (this[key] !== newVal) {
+            this._wrapper.props[key] = newVal
+          }
         },
 
         enumerable: false,
@@ -176,9 +194,9 @@ function wrap (Vue, Component) {
 
   class CustomElement extends HTMLElement {
     constructor () {
-      var _this3
+      var _this2
 
-      _this3 = super()
+      _this2 = super()
       this.attachShadow({
         mode: 'open'
       })
@@ -209,15 +227,15 @@ function wrap (Vue, Component) {
         for (var i = 0; i < mutations.length; i++) {
           var m = mutations[i]
 
-          if (isInitialized && m.type === 'attributes' && m.target === _this3) {
-            syncAttribute(_this3, m.attributeName)
+          if (isInitialized && m.type === 'attributes' && m.target === _this2) {
+            syncAttribute(_this2, m.attributeName)
           } else {
             hasChildrenChange = true
           }
         }
 
         if (hasChildrenChange) {
-          wrapper.slotChildren = Object.freeze(toVNodes(wrapper.$createElement, _this3.childNodes))
+          wrapper.slotChildren = Object.freeze(toVNodes(wrapper.$createElement, _this2.childNodes))
         }
       })
       observer.observe(this, {
@@ -233,7 +251,7 @@ function wrap (Vue, Component) {
     }
 
     connectedCallback () {
-      var _this4 = this
+      var _this3 = this
 
       var wrapper = this._wrapper
 
@@ -242,7 +260,7 @@ function wrap (Vue, Component) {
         var syncInitialAttributes = function () {
           wrapper.props = getInitialProps(camelizedPropsList)
           hyphenatedPropsList.forEach(function (key) {
-            syncAttribute(_this4, key)
+            syncAttribute(_this3, key)
           })
         }
 
