@@ -197,16 +197,14 @@ var wrapVueWebComponent = (function () {
 
     class CustomElement extends HTMLElement {
       constructor () {
-        var _this2
-
-        _this2 = super()
-        this.attachShadow({
+        var self = super()
+        self.attachShadow({
           mode: 'open'
         })
-        var wrapper = this._wrapper = new Vue({
+        var wrapper = self._wrapper = new Vue({
           name: 'shadow-root',
-          customElement: this,
-          shadowRoot: this.shadowRoot,
+          customElement: self,
+          shadowRoot: self.shadowRoot,
 
           data () {
             return {
@@ -230,18 +228,18 @@ var wrapVueWebComponent = (function () {
           for (var i = 0; i < mutations.length; i++) {
             var m = mutations[i]
 
-            if (isInitialized && m.type === 'attributes' && m.target === _this2) {
-              syncAttribute(_this2, m.attributeName)
+            if (isInitialized && m.type === 'attributes' && m.target === self) {
+              syncAttribute(self, m.attributeName)
             } else {
               hasChildrenChange = true
             }
           }
 
           if (hasChildrenChange) {
-            wrapper.slotChildren = Object.freeze(toVNodes(wrapper.$createElement, _this2.childNodes))
+            wrapper.slotChildren = Object.freeze(toVNodes(wrapper.$createElement, self.childNodes))
           }
         })
-        observer.observe(this, {
+        observer.observe(self, {
           childList: true,
           subtree: true,
           characterData: true,
@@ -254,7 +252,7 @@ var wrapVueWebComponent = (function () {
       }
 
       connectedCallback () {
-        var _this3 = this
+        var _this2 = this
 
         var wrapper = this._wrapper
 
@@ -263,7 +261,7 @@ var wrapVueWebComponent = (function () {
           var syncInitialAttributes = function () {
             wrapper.props = getInitialProps(camelizedPropsList)
             hyphenatedPropsList.forEach(function (key) {
-              syncAttribute(_this3, key)
+              syncAttribute(_this2, key)
             })
           }
 
