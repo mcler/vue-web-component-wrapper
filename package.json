@@ -1,6 +1,6 @@
 {
   "name": "@mcler/vue-web-component-wrapper",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "wrap a vue component as a web component.",
   "main": "dist/vue-wc-wrapper.js",
   "files": [

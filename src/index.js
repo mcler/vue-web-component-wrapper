@@ -176,7 +176,9 @@ export default function wrap (Vue, Component) {
             if (resolved.__esModule || resolved[Symbol.toStringTag] === 'Module') {
               resolved = resolved.default
             }
+            resolved = Object.assign({}, resolved)
             initialize(resolved)
+            Component = resolved
             syncInitialAttributes()
           })
         }
@@ -198,6 +200,7 @@ export default function wrap (Vue, Component) {
   }
 
   if (!isAsync) {
+    Component = Object.assign({}, Component)
     initialize(Component)
   }
 
