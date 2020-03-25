@@ -271,7 +271,9 @@ function wrap (Vue, Component) {
               resolved = resolved.default
             }
 
+            resolved = Object.assign({}, resolved)
             initialize(resolved)
+            Component = resolved
             syncInitialAttributes()
           })
         } // initialize children
@@ -290,6 +292,7 @@ function wrap (Vue, Component) {
   }
 
   if (!isAsync) {
+    Component = Object.assign({}, Component)
     initialize(Component)
   }
 

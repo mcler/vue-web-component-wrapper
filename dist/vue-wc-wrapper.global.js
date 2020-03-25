@@ -274,7 +274,9 @@ var wrapVueWebComponent = (function () {
                 resolved = resolved.default
               }
 
+              resolved = Object.assign({}, resolved)
               initialize(resolved)
+              Component = resolved
               syncInitialAttributes()
             })
           } // initialize children
@@ -293,6 +295,7 @@ var wrapVueWebComponent = (function () {
     }
 
     if (!isAsync) {
+      Component = Object.assign({}, Component)
       initialize(Component)
     }
 
