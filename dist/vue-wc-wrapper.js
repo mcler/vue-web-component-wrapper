@@ -127,8 +127,12 @@ function wrap (Vue, Component) {
     }, {}) // proxy $emit to native DOM events
 
     injectHook(options, 'beforeCreate', function () {
+      if (!this.$root.$options.customElement || !this.$root.$options.shadowRoot) {
+        return
+      }
+
+      var vm = this
       var emit = this.$emit
-      var vue = this
 
       this.$emit = function () {
         var args = Array.from(arguments)
@@ -151,17 +155,20 @@ function wrap (Vue, Component) {
         }
 
         if (propName) {
-          vue.$root.$options.customElement[propName] = value
+          vm.$root.$options.customElement[propName] = value
         }
 
-        vue.$root.$options.customElement.dispatchEvent(createCustomEvent(eventName, args))
-        return emit.apply(vue, [name].concat(args))
+        vm.$root.$options.customElement.dispatchEvent(createCustomEvent(eventName, args))
+        return emit.apply(vm, [name].concat(args))
       }
     })
     injectHook(options, 'created', function () {
       var _this = this
 
-      // sync default props values to wrapper on created
+      if (!this.$root.$options.customElement || !this.$root.$options.shadowRoot) {
+        return
+      } // sync default props values to wrapper on created
+
       camelizedPropsList.forEach(function (key) {
         _this.$root.props[key] = _this[key]
       })
@@ -271,9 +278,7 @@ function wrap (Vue, Component) {
               resolved = resolved.default
             }
 
-            resolved = Object.assign({}, resolved)
             initialize(resolved)
-            Component = resolved
             syncInitialAttributes()
           })
         } // initialize children
@@ -292,7 +297,6 @@ function wrap (Vue, Component) {
   }
 
   if (!isAsync) {
-    Component = Object.assign({}, Component)
     initialize(Component)
   }
 
