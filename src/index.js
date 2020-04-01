@@ -37,8 +37,11 @@ export default function wrap (Vue, Component) {
 
     // proxy $emit to native DOM events
     injectHook(options, 'beforeCreate', function () {
+      if (!this.$root.$options.customElement || !this.$root.$options.shadowRoot) {
+        return
+      }
+      const vm = this
       const emit = this.$emit
-      const vue = this
 
       this.$emit = function () {
         const args = Array.from(arguments)
@@ -59,16 +62,19 @@ export default function wrap (Vue, Component) {
         }
 
         if (propName) {
-          vue.$root.$options.customElement[propName] = value
+          vm.$root.$options.customElement[propName] = value
         }
 
-        vue.$root.$options.customElement.dispatchEvent(createCustomEvent(eventName, args))
+        vm.$root.$options.customElement.dispatchEvent(createCustomEvent(eventName, args))
 
-        return emit.apply(vue, [name].concat(args))
+        return emit.apply(vm, [name].concat(args))
       }
     })
 
     injectHook(options, 'created', function () {
+      if (!this.$root.$options.customElement || !this.$root.$options.shadowRoot) {
+        return
+      }
       // sync default props values to wrapper on created
       camelizedPropsList.forEach(key => {
         this.$root.props[key] = this[key]
@@ -176,9 +182,7 @@ export default function wrap (Vue, Component) {
             if (resolved.__esModule || resolved[Symbol.toStringTag] === 'Module') {
               resolved = resolved.default
             }
-            resolved = Object.assign({}, resolved)
             initialize(resolved)
-            Component = resolved
             syncInitialAttributes()
           })
         }
@@ -200,7 +204,6 @@ export default function wrap (Vue, Component) {
   }
 
   if (!isAsync) {
-    Component = Object.assign({}, Component)
     initialize(Component)
   }
 
